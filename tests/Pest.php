@@ -1,5 +1,5 @@
 <?php
 
-use Codinglabs\Skeleton\Tests\TestCase;
+use Codinglabs\NotificationSubscriptions\Tests\TestCase;
 
 uses(TestCase::class)->in(__DIR__);

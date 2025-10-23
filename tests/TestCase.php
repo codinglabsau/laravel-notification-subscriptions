@@ -1,10 +1,10 @@
 <?php
 
-namespace Codinglabs\Skeleton\Tests;
+namespace Codinglabs\NotificationSubscriptions\Tests;
 
-use Codinglabs\Skeleton\SkeletonServiceProvider;
 use Orchestra\Testbench\TestCase as BaseTestClass;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Codinglabs\NotificationSubscriptions\NotificationSubscriptionsServiceProvider;
 
 abstract class TestCase extends BaseTestClass
 {
@@ -13,7 +13,7 @@ abstract class TestCase extends BaseTestClass
         parent::setUp();
 
         Factory::guessFactoryNamesUsing(
-            fn (string $modelName) => 'Codinglabs\\Skeleton\\Database\\Factories\\' . class_basename($modelName) . 'Factory'
+            fn (string $modelName) => 'Codinglabs\\NotificationSubscriptions\\Database\\Factories\\' . class_basename($modelName) . 'Factory'
         );
 
         //        $this->artisan('vendor:publish', ['--tag' => 'roles-migrations'])->run();
@@ -24,7 +24,7 @@ abstract class TestCase extends BaseTestClass
     protected function getPackageProviders($app)
     {
         return [
-            SkeletonServiceProvider::class,
+            NotificationSubscriptionsServiceProvider::class,
         ];
     }
 

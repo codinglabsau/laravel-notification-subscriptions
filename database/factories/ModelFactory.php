@@ -1,6 +1,6 @@
 <?php
 
-namespace Codinglabs\Skeleton\Database\Factories;
+namespace Codinglabs\LaravelNotificationSubscriptions\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 

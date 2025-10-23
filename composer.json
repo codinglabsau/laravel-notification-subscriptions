@@ -1,18 +1,20 @@
 {
-  "name": "codinglabsau/:package_slug",
-  "description": ":package_description",
+  "name": "codinglabsau/laravel-notification-subscriptions",
+  "description": "Manage user notification subscriptions across multiple notification types and channels",
   "keywords": [
     "Codinglabs",
     "laravel",
-    ":package_slug"
+    "Notifications",
+    "Notification Subscriptions",
+    "laravel-notification-subscriptions"
   ],
-  "homepage": "https://github.com/codinglabsau/:package_slug",
+  "homepage": "https://github.com/codinglabsau/laravel-notification-subscriptions",
   "license": "MIT",
   "authors": [
     {
-      "name": ":author_name",
-      "email": "author@domain.com",
-      "role": "Developer"
+      "name": "Steve Thomas",
+      "email": "steve@codinglabs.com.au",
+      "homepage": "https://codinglabs.com.au"
     }
   ],
   "require": {
@@ -28,17 +30,17 @@
   },
   "autoload": {
     "psr-4": {
-      "Codinglabs\\Skeleton\\": "src",
-      "Codinglabs\\Skeleton\\Database\\Factories\\": "database/factories"
+      "Codinglabs\\NotificationSubscriptions\\": "src",
+      "Codinglabs\\NotificationSubscriptions\\Database\\Factories\\": "database/factories"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "Codinglabs\\Skeleton\\Tests\\": "tests"
+      "Codinglabs\\NotificationSubscriptions\\Tests\\": "tests"
     }
   },
   "scripts": {
-    "test": "vendor/bin/phpunit"
+    "test": "vendor/bin/pest"
   },
   "config": {
     "sort-packages": true,
@@ -49,10 +51,10 @@
   "extra": {
     "laravel": {
       "providers": [
-        "Codinglabs\\Skeleton\\SkeletonServiceProvider"
+        "Codinglabs\\NotificationSubscriptions\\NotificationSubscriptionsServiceProvider"
       ],
       "aliases": {
-        "Skeleton": "Codinglabs\\Skeleton\\Facades\\Skeleton"
+        "NotificationSubscriptions": "Codinglabs\\NotificationSubscriptions\\Facades\\NotificationSubscriptions"
       }
     }
   },

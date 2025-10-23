@@ -1,10 +1,10 @@
-# :package_name for Laravel
+# laravel-notification-subscriptions for Laravel
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/codinglabsau/:package_slug.svg?style=flat-square)](https://packagist.org/packages/codinglabsau/:package_slug)
-[![Test](https://github.com/codinglabsau/:package_slug/actions/workflows/run-tests.yml/badge.svg)](https://github.com/codinglabsau/:package_slug/actions/workflows/run-tests.yml)
-[![Total Downloads](https://img.shields.io/packagist/dt/codinglabsau/:package_slug.svg?style=flat-square)](https://packagist.org/packages/codinglabsau/:package_slug)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/codinglabsau/laravel-notification-subscriptions.svg?style=flat-square)](https://packagist.org/packages/codinglabsau/laravel-notification-subscriptions)
+[![Test](https://github.com/codinglabsau/laravel-notification-subscriptions/actions/workflows/run-tests.yml/badge.svg)](https://github.com/codinglabsau/laravel-notification-subscriptions/actions/workflows/run-tests.yml)
+[![Total Downloads](https://img.shields.io/packagist/dt/codinglabsau/laravel-notification-subscriptions.svg?style=flat-square)](https://packagist.org/packages/codinglabsau/laravel-notification-subscriptions)
 
-:package_name does something awesome.
+Laravel Notification Subscriptions manages user notification subscriptions across multiple notification types and channels.
 
 Here is a bit more about why it is awesome.
 
@@ -16,24 +16,24 @@ ___
 
 ### Install With Composer
 ```bash
-composer require codinglabsau/:package_slug
+composer require codinglabsau/laravel-notification-subscriptions
 ```
 
 ### Database Migrations
 ```bash
-php artisan vendor:publish --tag=":package_slug-migrations"
+php artisan vendor:publish --tag="laravel-notification-subscriptions-migrations"
 php artisan migrate
 ```
 
 ### Publish Configuration
 ```bash
-php artisan vendor:publish --tag=":package_slug-config"
+php artisan vendor:publish --tag="laravel-notification-subscriptions-config"
 ```
 
 ## Usage
 Create a new feature in the database and set the initial state:
 ```php
-use Codinglabs\Skeleton;
+use Codinglabs\NotificationSubscriptions;
 
 // ...
 ```
@@ -47,7 +47,7 @@ composer test
 Please review [our security policy](../../security/policy) on how to report security vulnerabilities.
 
 ## Credits
-- [:author_name](https://github.com/:author_username)
+- [Steve Thomas](https://github.com/stevethomas)
 - [All Contributors](../../contributors)
 
 ## License

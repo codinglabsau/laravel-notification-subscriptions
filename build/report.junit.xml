@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="/Users/stevethomas/code/laravel-notification-subscriptions/phpunit.xml.dist" tests="1" assertions="1" errors="0" failures="0" skipped="0" time="0.077300">
+    <testsuite name="Codinglabs Test Suite" tests="1" assertions="1" errors="0" failures="0" skipped="0" time="0.077300">
+      <testsuite name="Tests\ExampleTest" file="tests/ExampleTest.php" tests="1" assertions="1" errors="0" failures="0" skipped="0" time="0.077300">
+        <testcase name="it can test" file="tests/ExampleTest.php::it can test" class="Tests\ExampleTest" classname="Tests.ExampleTest" assertions="1" time="0.077300"/>
+      </testsuite>
+    </testsuite>
+  </testsuite>
+</testsuites>
