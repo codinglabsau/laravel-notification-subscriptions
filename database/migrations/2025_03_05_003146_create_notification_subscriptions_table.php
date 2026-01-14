@@ -8,7 +8,9 @@ return new class() extends Migration
 {
     public function up(): void
     {
-        Schema::create('notification_subscriptions', function (Blueprint $table) {
+        $tableName = config('notification-subscriptions.table', 'notification_subscriptions');
+
+        Schema::create($tableName, function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->index();
             $table->string('type');
@@ -19,8 +21,10 @@ return new class() extends Migration
         });
     }
 
-    public function down()
+    public function down(): void
     {
-        Schema::dropIfExists('notification_subscriptions');
+        $tableName = config('notification-subscriptions.table', 'notification_subscriptions');
+
+        Schema::dropIfExists($tableName);
     }
 };
