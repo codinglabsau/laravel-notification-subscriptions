@@ -2,8 +2,8 @@
 
 namespace Codinglabs\NotificationSubscriptions\Database\Factories;
 
-use Codinglabs\NotificationSubscriptions\Models\NotificationSubscription;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Codinglabs\NotificationSubscriptions\Models\NotificationSubscription;
 
 class NotificationSubscriptionFactory extends Factory
 {
