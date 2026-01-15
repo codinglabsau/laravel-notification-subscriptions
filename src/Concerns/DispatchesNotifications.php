@@ -111,7 +111,7 @@ trait DispatchesNotifications
         }
 
         return ! RateLimiter::attempt(
-            key: static::type() . ':' . $channel->value . ':' . $this->subject()->getKey() . ':' . $notifiable->id,
+            key: static::type() . ':' . $channel->value . ':' . $this->subject()->getKey() . ':' . $notifiable->getKey(),
             maxAttempts: 1,
             callback: fn () => true,
             decaySeconds: $channel->rateLimitDuration()
