@@ -2,8 +2,8 @@
 
 namespace Codinglabs\NotificationSubscriptions\Database\Factories;
 
-use Illuminate\Database\Eloquent\Factories\Factory;
 use Codinglabs\NotificationSubscriptions\Models\NotificationSubscription;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
 class NotificationSubscriptionFactory extends Factory
 {
@@ -12,12 +12,8 @@ class NotificationSubscriptionFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => null,
-            'type' => 'test_notification',
-            'channels' => [
-                'database',
-                'mail',
-            ],
+            'type' => $this->faker->slug(2),
+            'channels' => ['database', 'mail'],
         ];
     }
 }

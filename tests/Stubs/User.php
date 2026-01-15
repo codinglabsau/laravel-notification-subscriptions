@@ -5,7 +5,7 @@ namespace Codinglabs\NotificationSubscriptions\Tests\Stubs;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Codinglabs\NotificationSubscriptions\Traits\HasNotificationSubscriptions;
+use Codinglabs\NotificationSubscriptions\Concerns\HasNotificationSubscriptions;
 
 class User extends Authenticatable
 {

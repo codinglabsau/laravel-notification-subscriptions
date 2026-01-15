@@ -1,0 +1,30 @@
+<?php
+
+namespace App\Providers;
+
+use Illuminate\Support\ServiceProvider;
+use Codinglabs\NotificationSubscriptions\Facades\NotificationSubscriptions;
+
+class NotificationSubscriptionsServiceProvider extends ServiceProvider
+{
+    public function register(): void
+    {
+        //
+    }
+
+    public function boot(): void
+    {
+        // Register your subscribable notifications here
+        // NotificationSubscriptions::register([
+        //     \App\Notifications\OrderShippedNotification::class,
+        //     \App\Notifications\NewMessageNotification::class,
+        // ]);
+
+        // Conditional registration example:
+        // if (config('features.slack_enabled')) {
+        //     NotificationSubscriptions::register([
+        //         \App\Notifications\SlackAlertNotification::class,
+        //     ]);
+        // }
+    }
+}

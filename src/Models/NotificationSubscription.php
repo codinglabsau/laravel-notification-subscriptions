@@ -25,9 +25,4 @@ class NotificationSubscription extends Model
     {
         return $this->belongsTo(config('notification-subscriptions.user_model'));
     }
-
-    protected static function newFactory()
-    {
-        return \Codinglabs\NotificationSubscriptions\Database\Factories\NotificationSubscriptionFactory::new();
-    }
 }

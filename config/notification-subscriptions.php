@@ -38,52 +38,15 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Notification Channels
+    | Default Rate Limit Duration
     |--------------------------------------------------------------------------
     |
-    | Configure the available notification channels. Each channel can have:
-    | - driver: The Laravel notification channel driver
-    | - enabled: Whether the channel is enabled (bool or closure)
-    | - default_on: Whether the channel is enabled by default for new users
-    | - rate_limited: Whether to apply rate limiting for this channel
-    | - label: Human-readable label for the channel
+    | The default duration in seconds for rate limiting notifications.
+    | This is used as a fallback if your channel enum's rateLimitDuration()
+    | method doesn't specify a value. Default is 60 seconds.
     |
     */
 
-    'channels' => [
-        'database' => [
-            'driver' => 'database',
-            'enabled' => true,
-            'default_on' => true,
-            'rate_limited' => false,
-            'label' => 'In-App',
-        ],
-        'mail' => [
-            'driver' => 'mail',
-            'enabled' => true,
-            'default_on' => true,
-            'rate_limited' => true,
-            'label' => 'Email',
-        ],
-        'broadcast' => [
-            'driver' => 'broadcast',
-            'enabled' => true,
-            'default_on' => true,
-            'rate_limited' => true,
-            'label' => 'Toast',
-        ],
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Rate Limit Duration
-    |--------------------------------------------------------------------------
-    |
-    | The duration in seconds for rate limiting notifications per
-    | subject/channel/type combination. Default is 60 seconds.
-    |
-    */
-
-    'rate_limit_duration' => 60,
+    'default_rate_limit_duration' => 60,
 
 ];

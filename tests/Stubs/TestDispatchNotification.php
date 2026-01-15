@@ -19,6 +19,13 @@ class TestDispatchNotification extends Notification implements SubscribableNotif
 
     public static Collection $subscribers;
 
+    public static bool $beforeSendCalled = false;
+
+    public static function beforeSend($notification): void
+    {
+        static::$beforeSendCalled = true;
+    }
+
     public static function type(): string
     {
         return 'test_notification';

@@ -6,8 +6,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Notification;
-use Illuminate\Notifications\Messages\BroadcastMessage;
-use Codinglabs\NotificationSubscriptions\Enums\ChannelType;
+use Codinglabs\NotificationSubscriptions\Contracts\SubscribableChannel;
 
 trait DispatchesNotifications
 {
@@ -21,9 +20,9 @@ trait DispatchesNotifications
         // do nothing...
     }
 
-    public static function dispatch(): void
+    public static function sendToSubscribers(...$args): void
     {
-        $notification = new self(...func_get_args());
+        $notification = new static(...$args);
 
         static::beforeSend($notification);
 
@@ -33,7 +32,7 @@ trait DispatchesNotifications
     public static function values(): array
     {
         return collect(static::channels())
-            ->map(fn (ChannelType|string $channel) => $channel instanceof ChannelType ? $channel->toDatabase() : $channel)
+            ->map(fn (SubscribableChannel $channel) => $channel->value)
             ->toArray();
     }
 
@@ -42,7 +41,7 @@ trait DispatchesNotifications
     public function via(object $notifiable): array
     {
         return collect(static::channels())
-            ->map(fn (ChannelType|string $channel) => $channel instanceof ChannelType ? $channel->value : $channel)
+            ->map(fn (SubscribableChannel $channel) => $channel->driver())
             ->toArray();
     }
 
@@ -64,30 +63,31 @@ trait DispatchesNotifications
             }
         }
 
-        $channelType = ChannelType::tryFrom($channel);
+        // Find the SubscribableChannel enum case by driver name
+        $subscribableChannel = collect(static::channels())
+            ->first(fn (SubscribableChannel $ch) => $ch->driver() === $channel);
 
-        if (is_null($channelType)) {
+        // Unknown channels pass through (shouldn't happen with proper setup)
+        if (! $subscribableChannel) {
             return true;
         }
 
-        // do not send to channel that is not enabled
-        if (! $channelType->isEnabled()) {
+        // Do not send to channel that is not enabled
+        if (! $subscribableChannel->isEnabled()) {
             return false;
         }
 
+        // Check subscription preferences (stored by enum value)
         if ($subscription = $notifiable->notificationSubscriptions()->whereType(static::type())->first()) {
-            // do not send if the user has subscribed to the notification type, but not the channel
-            if (! in_array($channelType->toDatabase(), $subscription->channels)) {
+            if (! in_array($subscribableChannel->value, $subscription->channels)) {
                 return false;
             }
-        }
-
-        // do not send to the channel if it is default off
-        if (! $channelType->defaultOn() && ! $subscription) {
+        } elseif (! $subscribableChannel->defaultOn()) {
+            // Do not send to the channel if it is default off and no subscription exists
             return false;
         }
 
-        if ($this->isRateLimited($channelType, $notifiable)) {
+        if ($this->isRateLimited($subscribableChannel, $notifiable)) {
             return false;
         }
 
@@ -104,24 +104,17 @@ trait DispatchesNotifications
         return static::type();
     }
 
-    public function toBroadcast(object $notifiable): BroadcastMessage
+    protected function isRateLimited(SubscribableChannel $channel, object $notifiable): bool
     {
-        return new BroadcastMessage($this->toArray($notifiable)->toArray());
-    }
-
-    protected function isRateLimited(ChannelType $channelType, object $notifiable): bool
-    {
-        if (! $channelType->hasRateLimiting() || ! $this->subject()) {
+        if (! $channel->hasRateLimiting() || ! $this->subject()) {
             return false;
         }
 
-        $duration = config('notification-subscriptions.rate_limit_duration', 60);
-
         return ! RateLimiter::attempt(
-            key: static::type() . ':' . $channelType->toDatabase() . ':' . $this->subject()->getKey() . ':' . $notifiable->id,
+            key: static::type() . ':' . $channel->value . ':' . $this->subject()->getKey() . ':' . $notifiable->id,
             maxAttempts: 1,
             callback: fn () => true,
-            decaySeconds: $duration
+            decaySeconds: $channel->rateLimitDuration()
         );
     }
 }
