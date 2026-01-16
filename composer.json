@@ -10,13 +10,6 @@
   ],
   "homepage": "https://github.com/codinglabsau/laravel-notification-subscriptions",
   "license": "MIT",
-  "authors": [
-    {
-      "name": "Steve Thomas",
-      "email": "steve@codinglabs.com.au",
-      "homepage": "https://codinglabs.com.au"
-    }
-  ],
   "require": {
     "php": "^8.3",
     "illuminate/contracts": "^11.0|^12.0",
