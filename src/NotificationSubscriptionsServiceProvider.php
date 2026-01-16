@@ -14,4 +14,18 @@ class NotificationSubscriptionsServiceProvider extends PackageServiceProvider
             ->hasConfigFile()
             ->hasMigration('create_notification_subscriptions_table');
     }
+
+    public function packageRegistered(): void
+    {
+        $this->app->singleton(NotificationSubscriptionsManager::class);
+    }
+
+    public function packageBooted(): void
+    {
+        if ($this->app->runningInConsole()) {
+            $this->publishes([
+                __DIR__ . '/../stubs/NotificationSubscriptionsServiceProvider.php.stub' => app_path('Providers/NotificationSubscriptionsServiceProvider.php'),
+            ], 'laravel-notification-subscriptions-provider');
+        }
+    }
 }
