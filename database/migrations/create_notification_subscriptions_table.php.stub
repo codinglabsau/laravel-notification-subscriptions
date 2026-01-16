@@ -8,9 +8,7 @@ return new class() extends Migration
 {
     public function up(): void
     {
-        $tableName = config('notification-subscriptions.table', 'notification_subscriptions');
-
-        Schema::create($tableName, function (Blueprint $table) {
+        Schema::create($config('notification-subscriptions.table', 'notification_subscriptions'), function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->index();
             $table->string('type');
