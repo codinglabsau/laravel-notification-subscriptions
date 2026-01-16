@@ -21,6 +21,6 @@ return new class() extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists($config('notification-subscriptions.table', 'notification_subscriptions'));
+        Schema::dropIfExists(config('notification-subscriptions.table', 'notification_subscriptions'));
     }
 };
