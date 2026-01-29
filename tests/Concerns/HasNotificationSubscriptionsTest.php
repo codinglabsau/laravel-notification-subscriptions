@@ -110,12 +110,10 @@ describe('notification preferences', function () {
         expect($preferences->types)->toHaveKey('test_mail_only');
     });
 
-    test('getNotificationPreferences types excludes system channels', function () {
+    test('getNotificationPreferences types includes all enabled channels', function () {
         $preferences = $this->user->getNotificationPreferences();
 
-        // Database channel is a system channel and should not be in the types
-        expect($preferences->types['test_prepares_notification'])->not->toHaveKey('database');
-        // Mail channel should be present
+        expect($preferences->types['test_prepares_notification'])->toHaveKey('database');
         expect($preferences->types['test_prepares_notification'])->toHaveKey('mail');
     });
 
@@ -197,23 +195,8 @@ describe('notification preferences', function () {
 
         $preferences = $this->user->getNotificationPreferences();
 
-        // TestMandatoryNotification has MAIL as mandatory (non-system)
         expect($preferences->mandatory)->toHaveKey('test_mandatory_notification');
         expect($preferences->mandatory['test_mandatory_notification'])->toContain('mail');
-    });
-
-    test('getNotificationPreferences mandatory excludes system channels', function () {
-        app(NotificationSubscriptionsManager::class)->register([
-            TestMandatoryNotification::class,
-        ]);
-
-        $preferences = $this->user->getNotificationPreferences();
-
-        // DATABASE is a system channel and should not appear in mandatory
-        // (it's already hidden from the UI entirely)
-        if (isset($preferences->mandatory['test_mandatory_notification'])) {
-            expect($preferences->mandatory['test_mandatory_notification'])->not->toContain('database');
-        }
     });
 
     test('getNotificationPreferences mandatory is empty for notifications without mandatory channels', function () {

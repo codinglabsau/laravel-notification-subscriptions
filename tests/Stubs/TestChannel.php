@@ -63,9 +63,4 @@ enum TestChannel: string implements SubscribableChannel
             default => config('notification-subscriptions.default_rate_limit_duration', 60),
         };
     }
-
-    public function isSystemChannel(): bool
-    {
-        return $this === self::DATABASE;
-    }
 }

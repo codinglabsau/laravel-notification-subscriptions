@@ -13,7 +13,7 @@ A Laravel package for managing user notification preferences across multiple cha
 - **Per-notification control** - Configure which channels each notification type supports
 - **Smart defaults** - New users get sensible defaults; preferences are only stored when changed
 - **Rate limiting** - Prevent notification spam with configurable per-channel rate limits
-- **System channels** - Mark channels that users can't opt out of (like in-app notifications)
+- **Mandatory channels** - Per-notification channels that users can't opt out of
 - **Simple API** - `$user->getNotificationPreferences()` and `$user->updateNotificationPreferences()` for settings UIs
 
 ## Installation
@@ -94,11 +94,6 @@ enum NotificationChannel: string implements SubscribableChannel
             self::MAIL => 300, // 5 minutes
             default => 60,
         };
-    }
-
-    public function isSystemChannel(): bool
-    {
-        return $this === self::DATABASE;
     }
 }
 ```
@@ -261,7 +256,6 @@ Your channel enum must implement `SubscribableChannel` with these methods:
 | `defaultOn()` | `bool` | Whether new users have this channel enabled by default |
 | `hasRateLimiting()` | `bool` | Whether rate limiting applies to this channel |
 | `rateLimitDuration()` | `int` | Rate limit duration in seconds |
-| `isSystemChannel()` | `bool` | Whether users can opt out of this channel |
 
 ### Example: Advanced Channel Configuration
 
@@ -323,11 +317,6 @@ enum NotificationChannel: string implements SubscribableChannel
             self::SLACK => 60,  // 1 minute for Slack
             default => config('notification-subscriptions.default_rate_limit_duration', 60),
         };
-    }
-
-    public function isSystemChannel(): bool
-    {
-        return $this === self::DATABASE; // Users can't opt out of in-app
     }
 }
 ```
@@ -427,8 +416,6 @@ Use this in your frontend to disable checkboxes for mandatory channels:
 />
 ```
 
-> **Note:** System channels (where `isSystemChannel()` returns `true`) are already hidden from the UI entirely. Mandatory channels are different — they appear in the UI but cannot be unchecked.
-
 ## Building a Settings UI
 
 The package provides a simple API for building notification preference UIs. The `HasNotificationSubscriptions` trait adds two methods to your User model:
@@ -467,26 +454,25 @@ class UpdateNotificationSettingsRequest extends FormRequest
 
 The `ValidatesNotificationPreferences` trait:
 - Generates validation rules for each registered notification type
-- Automatically re-injects system channels (users can't opt out of them)
-- Automatically re-injects mandatory channels (users can't opt out of them either)
+- Automatically re-injects mandatory channels (users can't opt out of them)
 
 ### The NotificationPreferences DTO
 
-The `getNotificationPreferences()` method returns a `NotificationPreferences` object with two properties:
+The `getNotificationPreferences()` method returns a `NotificationPreferences` object with three properties:
 
 ```php
 NotificationPreferences {
-    // Channel options for the UI (excludes system channels)
+    // Channel options for the UI (enabled channels only)
     types: [
-        'order_shipped' => ['mail' => 'Email', 'slack' => 'Slack'],
+        'order_shipped' => ['database' => 'In-App', 'mail' => 'Email', 'slack' => 'Slack'],
         'new_message' => ['mail' => 'Email'],
     ],
     // User's current selections (or defaults)
     values: [
-        'order_shipped' => ['mail'],
+        'order_shipped' => ['database', 'mail'],
         'new_message' => ['mail', 'slack'],
     ],
-    // Channels that cannot be unsubscribed from (excludes system channels)
+    // Channels that cannot be unsubscribed from
     mandatory: [
         'order_shipped' => ['mail'],
     ],

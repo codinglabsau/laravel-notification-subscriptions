@@ -181,12 +181,6 @@ test('subject method returns null by default', function () {
     expect($notification->subject())->toBeNull();
 });
 
-test('isSystemChannel identifies system channels correctly', function () {
-    expect(TestChannel::DATABASE->isSystemChannel())->toBeTrue();
-    expect(TestChannel::MAIL->isSystemChannel())->toBeFalse();
-    expect(TestChannel::SLACK->isSystemChannel())->toBeFalse();
-});
-
 test('slack channel defaults to off', function () {
     expect(TestChannel::SLACK->defaultOn())->toBeFalse();
 });

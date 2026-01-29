@@ -39,12 +39,4 @@ interface SubscribableChannel
      * Rate limit duration in seconds.
      */
     public function rateLimitDuration(): int;
-
-    /**
-     * Whether this is a system channel that users cannot opt out of.
-     *
-     * System channels (e.g., database/in-app) are always enabled and
-     * hidden from the notification settings UI.
-     */
-    public function isSystemChannel(): bool;
 }

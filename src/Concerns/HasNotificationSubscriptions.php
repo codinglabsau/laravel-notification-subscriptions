@@ -29,9 +29,8 @@ trait HasNotificationSubscriptions
             $type = $notificationClass::type();
             $subscription = $subscriptions->firstWhere('type', $type);
 
-            // Types: available channel options (exclude system channels)
+            // Types: available channel options
             $types[$type] = collect($notificationClass::channels())
-                ->reject(fn ($ch) => $ch->isSystemChannel())
                 ->filter(fn ($ch) => $ch->isEnabled())
                 ->mapWithKeys(fn ($ch) => [$ch->value => $ch->label()])
                 ->all();
@@ -44,9 +43,8 @@ trait HasNotificationSubscriptions
                     ->values()
                     ->all();
 
-            // Mandatory: channels that cannot be unsubscribed from (exclude system channels, already hidden)
+            // Mandatory: channels that cannot be unsubscribed from
             $mandatoryValues = collect($notificationClass::mandatoryChannels())
-                ->reject(fn ($ch) => $ch->isSystemChannel())
                 ->filter(fn ($ch) => $ch->isEnabled())
                 ->map(fn ($ch) => $ch->value)
                 ->values()
