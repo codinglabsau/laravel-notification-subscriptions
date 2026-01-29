@@ -38,6 +38,11 @@ trait DispatchesNotifications
 
     abstract public static function channels(): array;
 
+    public static function mandatoryChannels(): array
+    {
+        return [];
+    }
+
     public function via(object $notifiable): array
     {
         return collect(static::channels())
@@ -75,6 +80,11 @@ trait DispatchesNotifications
         // Do not send to channel that is not enabled
         if (! $subscribableChannel->isEnabled()) {
             return false;
+        }
+
+        // Mandatory channels always send regardless of subscription preferences
+        if (in_array($subscribableChannel, static::mandatoryChannels())) {
+            return true;
         }
 
         // Check subscription preferences (stored by enum value)

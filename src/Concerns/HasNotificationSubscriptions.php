@@ -23,6 +23,7 @@ trait HasNotificationSubscriptions
 
         $types = [];
         $values = [];
+        $mandatory = [];
 
         foreach ($notifications as $notificationClass) {
             $type = $notificationClass::type();
@@ -42,9 +43,21 @@ trait HasNotificationSubscriptions
                     ->map(fn ($ch) => $ch->value)
                     ->values()
                     ->all();
+
+            // Mandatory: channels that cannot be unsubscribed from (exclude system channels, already hidden)
+            $mandatoryValues = collect($notificationClass::mandatoryChannels())
+                ->reject(fn ($ch) => $ch->isSystemChannel())
+                ->filter(fn ($ch) => $ch->isEnabled())
+                ->map(fn ($ch) => $ch->value)
+                ->values()
+                ->all();
+
+            if (! empty($mandatoryValues)) {
+                $mandatory[$type] = $mandatoryValues;
+            }
         }
 
-        return new NotificationPreferences($types, $values);
+        return new NotificationPreferences($types, $values, $mandatory);
     }
 
     public function updateNotificationPreferences(array $preferences): void

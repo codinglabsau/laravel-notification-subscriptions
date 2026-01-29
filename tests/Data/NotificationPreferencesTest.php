@@ -69,6 +69,51 @@ test('DTO handles empty arrays', function () {
     expect($decoded['values'])->toBe([]);
 });
 
+test('DTO supports mandatory param', function () {
+    $dto = new NotificationPreferences(
+        types: ['order_shipped' => ['mail' => 'Email']],
+        values: ['order_shipped' => ['mail']],
+        mandatory: ['order_shipped' => ['mail']]
+    );
+
+    expect($dto->mandatory)->toBe(['order_shipped' => ['mail']]);
+});
+
+test('DTO mandatory defaults to empty array', function () {
+    $dto = new NotificationPreferences(
+        types: ['order_shipped' => ['mail' => 'Email']],
+        values: ['order_shipped' => ['mail']]
+    );
+
+    expect($dto->mandatory)->toBe([]);
+});
+
+test('DTO mandatory property is readonly', function () {
+    $dto = new NotificationPreferences(
+        types: [],
+        values: [],
+        mandatory: ['order_shipped' => ['mail']]
+    );
+
+    $reflection = new ReflectionClass($dto);
+    $mandatoryProperty = $reflection->getProperty('mandatory');
+
+    expect($mandatoryProperty->isReadOnly())->toBeTrue();
+});
+
+test('DTO serializes mandatory to JSON correctly', function () {
+    $dto = new NotificationPreferences(
+        types: ['order_shipped' => ['mail' => 'Email']],
+        values: ['order_shipped' => ['mail']],
+        mandatory: ['order_shipped' => ['mail']]
+    );
+
+    $json = json_encode($dto);
+    $decoded = json_decode($json, true);
+
+    expect($decoded['mandatory'])->toBe(['order_shipped' => ['mail']]);
+});
+
 test('DTO can be used with array spread for Inertia', function () {
     $dto = new NotificationPreferences(
         types: ['order_shipped' => ['mail' => 'Email']],

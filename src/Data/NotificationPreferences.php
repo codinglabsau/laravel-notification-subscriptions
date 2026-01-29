@@ -9,5 +9,7 @@ class NotificationPreferences
         public readonly array $types,
         /** @var array<string, string[]> Enabled channels per notification type */
         public readonly array $values,
+        /** @var array<string, string[]> Mandatory channel values per notification type */
+        public readonly array $mandatory = [],
     ) {}
 }

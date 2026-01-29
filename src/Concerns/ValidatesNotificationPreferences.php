@@ -37,11 +37,17 @@ trait ValidatesNotificationPreferences
                 ->map(fn (SubscribableChannel $channel) => $channel->value)
                 ->toArray();
 
+            // Re-inject mandatory channels (users can't opt out of these either)
+            $mandatoryChannels = collect($notification::mandatoryChannels())
+                ->filter(fn (SubscribableChannel $channel) => in_array($channel, $notification::channels()))
+                ->map(fn (SubscribableChannel $channel) => $channel->value)
+                ->toArray();
+
             $currentChannels = $this->array($notification::type());
 
-            // Merge system channels back into the request
+            // Merge system and mandatory channels back into the request
             $this->merge([
-                $notification::type() => array_unique(array_merge($currentChannels, $systemChannels)),
+                $notification::type() => array_unique(array_merge($currentChannels, $systemChannels, $mandatoryChannels)),
             ]);
         }
     }

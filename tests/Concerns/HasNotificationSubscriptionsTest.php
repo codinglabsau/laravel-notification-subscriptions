@@ -7,6 +7,7 @@ use Codinglabs\NotificationSubscriptions\Models\NotificationSubscription;
 use Codinglabs\NotificationSubscriptions\NotificationSubscriptionsManager;
 use Codinglabs\NotificationSubscriptions\Tests\Stubs\TestMailOnlyNotification;
 use Codinglabs\NotificationSubscriptions\Tests\Stubs\TestPreparesNotification;
+use Codinglabs\NotificationSubscriptions\Tests\Stubs\TestMandatoryNotification;
 
 test('provides notificationSubscriptions relationship', function () {
     $user = User::factory()->create();
@@ -187,6 +188,40 @@ describe('notification preferences', function () {
             ->first();
 
         expect($subscription->channels)->toBe(['mail']);
+    });
+
+    test('getNotificationPreferences populates mandatory data', function () {
+        app(NotificationSubscriptionsManager::class)->register([
+            TestMandatoryNotification::class,
+        ]);
+
+        $preferences = $this->user->getNotificationPreferences();
+
+        // TestMandatoryNotification has MAIL as mandatory (non-system)
+        expect($preferences->mandatory)->toHaveKey('test_mandatory_notification');
+        expect($preferences->mandatory['test_mandatory_notification'])->toContain('mail');
+    });
+
+    test('getNotificationPreferences mandatory excludes system channels', function () {
+        app(NotificationSubscriptionsManager::class)->register([
+            TestMandatoryNotification::class,
+        ]);
+
+        $preferences = $this->user->getNotificationPreferences();
+
+        // DATABASE is a system channel and should not appear in mandatory
+        // (it's already hidden from the UI entirely)
+        if (isset($preferences->mandatory['test_mandatory_notification'])) {
+            expect($preferences->mandatory['test_mandatory_notification'])->not->toContain('database');
+        }
+    });
+
+    test('getNotificationPreferences mandatory is empty for notifications without mandatory channels', function () {
+        $preferences = $this->user->getNotificationPreferences();
+
+        // TestPreparesNotification and TestMailOnlyNotification have no mandatory channels
+        expect($preferences->mandatory)->not->toHaveKey('test_prepares_notification');
+        expect($preferences->mandatory)->not->toHaveKey('test_mail_only');
     });
 
     test('updateNotificationPreferences handles empty channels array', function () {

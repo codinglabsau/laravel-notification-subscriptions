@@ -357,6 +357,78 @@ public function subject(): ?Model
 
 If `subject()` returns `null`, rate limiting is skipped for that notification.
 
+## Mandatory Channels
+
+Some notifications must always be sent via certain channels regardless of user preferences. For example, a support ticket reply might always need an email notification, even if the user has opted out of email for other notifications.
+
+### Defining Mandatory Channels
+
+Override `mandatoryChannels()` in your notification class to specify channels that cannot be unsubscribed from:
+
+```php
+class TicketReplyNotification extends Notification implements SubscribableNotification
+{
+    use DispatchesNotifications;
+
+    public static function type(): string
+    {
+        return 'ticket_reply';
+    }
+
+    public static function channels(): array
+    {
+        return [NotificationChannel::DATABASE, NotificationChannel::MAIL, NotificationChannel::PUSH];
+    }
+
+    // Mail is mandatory — users cannot unsubscribe from it
+    public static function mandatoryChannels(): array
+    {
+        return [NotificationChannel::MAIL];
+    }
+
+    // ...
+}
+```
+
+By default, `mandatoryChannels()` returns an empty array, meaning all channels are optional.
+
+### How Mandatory Channels Work
+
+Mandatory channels are enforced at three levels:
+
+1. **`shouldSend()` defense-in-depth** — When dispatching a notification, mandatory channels always return `true` in `shouldSend()`, even if the user's subscription record excludes them. This ensures delivery even with stale subscription data.
+
+2. **Validation re-injection** — The `ValidatesNotificationPreferences` trait automatically re-injects mandatory channels into form requests during `prepareForValidation()`, so they can never be removed by user input.
+
+3. **`NotificationPreferences` DTO** — The `getNotificationPreferences()` method populates a `mandatory` property on the DTO, mapping each notification type to its mandatory channel values. This allows your UI to render mandatory channels as disabled/locked checkboxes.
+
+### Using Mandatory Data in the UI
+
+The `NotificationPreferences` DTO includes a `mandatory` property:
+
+```php
+NotificationPreferences {
+    types: [...],
+    values: [...],
+    mandatory: [
+        'ticket_reply' => ['mail'],
+    ],
+}
+```
+
+Use this in your frontend to disable checkboxes for mandatory channels:
+
+```vue
+<input
+    type="checkbox"
+    :value="value"
+    v-model="form[type]"
+    :disabled="mandatory[type]?.includes(value)"
+/>
+```
+
+> **Note:** System channels (where `isSystemChannel()` returns `true`) are already hidden from the UI entirely. Mandatory channels are different — they appear in the UI but cannot be unchecked.
+
 ## Building a Settings UI
 
 The package provides a simple API for building notification preference UIs. The `HasNotificationSubscriptions` trait adds two methods to your User model:
@@ -396,6 +468,7 @@ class UpdateNotificationSettingsRequest extends FormRequest
 The `ValidatesNotificationPreferences` trait:
 - Generates validation rules for each registered notification type
 - Automatically re-injects system channels (users can't opt out of them)
+- Automatically re-injects mandatory channels (users can't opt out of them either)
 
 ### The NotificationPreferences DTO
 
@@ -412,6 +485,10 @@ NotificationPreferences {
     values: [
         'order_shipped' => ['mail'],
         'new_message' => ['mail', 'slack'],
+    ],
+    // Channels that cannot be unsubscribed from (excludes system channels)
+    mandatory: [
+        'order_shipped' => ['mail'],
     ],
 }
 ```

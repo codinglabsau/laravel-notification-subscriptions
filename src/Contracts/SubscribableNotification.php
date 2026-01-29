@@ -39,4 +39,14 @@ interface SubscribableNotification
      * Get the users who should receive this notification.
      */
     public function subscribers();
+
+    /**
+     * Get the channels that are mandatory for this notification.
+     *
+     * Mandatory channels cannot be unsubscribed from by users.
+     * They will always be included in the user's subscription.
+     *
+     * @return SubscribableChannel[]
+     */
+    public static function mandatoryChannels(): array;
 }
