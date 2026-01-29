@@ -8,11 +8,14 @@ use Codinglabs\NotificationSubscriptions\NotificationSubscriptionsManager;
 
 trait ValidatesNotificationPreferences
 {
+    public function notifications(): array
+    {
+        return app(NotificationSubscriptionsManager::class)->notifications();
+    }
+
     public function rules(): array
     {
-        $notifications = app(NotificationSubscriptionsManager::class)->notifications();
-
-        return collect($notifications)
+        return collect($this->notifications())
             ->mapWithKeys(fn (string $notification) => [
                 $notification::type() => [
                     'array',
@@ -28,7 +31,7 @@ trait ValidatesNotificationPreferences
 
     protected function prepareForValidation(): void
     {
-        $notifications = app(NotificationSubscriptionsManager::class)->notifications();
+        $notifications = $this->notifications();
 
         foreach ($notifications as $notification) {
             // Re-inject mandatory channels (users can't opt out of these)

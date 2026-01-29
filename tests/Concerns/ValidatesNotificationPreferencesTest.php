@@ -16,6 +16,17 @@ class TestValidationRequest extends FormRequest
     use ValidatesNotificationPreferences;
 }
 
+// Create a form request that overrides notifications()
+class TestLimitedValidationRequest extends FormRequest
+{
+    use ValidatesNotificationPreferences;
+
+    public function notifications(): array
+    {
+        return [TestMailOnlyNotification::class];
+    }
+}
+
 beforeEach(function () {
     // Register test notifications
     app(NotificationSubscriptionsManager::class)->register([
@@ -124,6 +135,26 @@ test('prepareForValidation handles empty channel array without mandatory channel
 
     // No mandatory channels, so should remain empty
     expect($formRequest->input('test_prepares_notification'))->toBe([]);
+});
+
+test('default notifications method returns manager registered notifications', function () {
+    $request = new TestValidationRequest();
+
+    expect($request->notifications())->toBe([
+        TestPreparesNotification::class,
+        TestMailOnlyNotification::class,
+    ]);
+});
+
+test('overridden notifications method limits validation to only those notifications', function () {
+    $request = new TestLimitedValidationRequest();
+
+    $rules = $request->rules();
+
+    expect($rules)->toHaveKey('test_mail_only');
+    expect($rules)->toHaveKey('test_mail_only.*');
+    expect($rules)->not->toHaveKey('test_prepares_notification');
+    expect($rules)->not->toHaveKey('test_prepares_notification.*');
 });
 
 describe('mandatory channel preservation', function () {
