@@ -31,19 +31,20 @@ trait ValidatesNotificationPreferences
 
     protected function prepareForValidation(): void
     {
-        $notifications = $this->notifications();
-
-        foreach ($notifications as $notification) {
-            // Re-inject mandatory channels (users can't opt out of these)
+        foreach ($this->notifications() as $notification) {
             $mandatoryChannels = collect($notification::mandatoryChannels())
                 ->filter(fn (SubscribableChannel $channel) => in_array($channel, $notification::channels()))
                 ->map(fn (SubscribableChannel $channel) => $channel->value)
                 ->toArray();
 
-            $currentChannels = $this->array($notification::type());
+            if (empty($mandatoryChannels)) {
+                continue;
+            }
 
             $this->merge([
-                $notification::type() => array_unique(array_merge($currentChannels, $mandatoryChannels)),
+                $notification::type() => array_unique(
+                    array_merge($this->array($notification::type()), $mandatoryChannels)
+                ),
             ]);
         }
     }
