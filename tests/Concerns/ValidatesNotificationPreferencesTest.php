@@ -103,6 +103,22 @@ test('validation fails with duplicate channels', function () {
     expect($validator->fails())->toBeTrue();
 });
 
+test('prepareForValidation preserves duplicates for notifications without mandatory channels', function () {
+    $httpRequest = Request::create('/', 'POST', [
+        'test_prepares_notification' => ['mail', 'mail'],
+    ]);
+
+    $formRequest = TestValidationRequest::createFrom($httpRequest);
+    $formRequest->setContainer(app());
+
+    $reflection = new ReflectionMethod($formRequest, 'prepareForValidation');
+    $reflection->setAccessible(true);
+    $reflection->invoke($formRequest);
+
+    // Duplicates should NOT be stripped — the distinct validation rule handles them
+    expect($formRequest->input('test_prepares_notification'))->toBe(['mail', 'mail']);
+});
+
 test('prepareForValidation does not modify channels for notifications without mandatory channels', function () {
     $httpRequest = Request::create('/', 'POST', [
         'test_prepares_notification' => ['mail'],
