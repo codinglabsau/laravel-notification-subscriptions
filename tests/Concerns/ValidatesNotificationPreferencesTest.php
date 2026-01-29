@@ -7,12 +7,24 @@ use Codinglabs\NotificationSubscriptions\Tests\Stubs\User;
 use Codinglabs\NotificationSubscriptions\NotificationSubscriptionsManager;
 use Codinglabs\NotificationSubscriptions\Tests\Stubs\TestMailOnlyNotification;
 use Codinglabs\NotificationSubscriptions\Tests\Stubs\TestPreparesNotification;
+use Codinglabs\NotificationSubscriptions\Tests\Stubs\TestMandatoryNotification;
 use Codinglabs\NotificationSubscriptions\Concerns\ValidatesNotificationPreferences;
 
 // Create a test form request
 class TestValidationRequest extends FormRequest
 {
     use ValidatesNotificationPreferences;
+}
+
+// Create a form request that overrides notifications()
+class TestLimitedValidationRequest extends FormRequest
+{
+    use ValidatesNotificationPreferences;
+
+    public function notifications(): array
+    {
+        return [TestMailOnlyNotification::class];
+    }
 }
 
 beforeEach(function () {
@@ -91,49 +103,25 @@ test('validation fails with duplicate channels', function () {
     expect($validator->fails())->toBeTrue();
 });
 
-test('prepareForValidation injects system channels when notification supports them', function () {
-    // Create a real HTTP request with input data
+test('prepareForValidation does not modify channels for notifications without mandatory channels', function () {
     $httpRequest = Request::create('/', 'POST', [
-        'test_prepares_notification' => ['mail'], // No database channel
+        'test_prepares_notification' => ['mail'],
         'test_mail_only' => ['mail'],
     ]);
 
     $formRequest = TestValidationRequest::createFrom($httpRequest);
     $formRequest->setContainer(app());
 
-    // Manually call prepareForValidation
     $reflection = new ReflectionMethod($formRequest, 'prepareForValidation');
     $reflection->setAccessible(true);
     $reflection->invoke($formRequest);
 
-    // Database channel should be injected for test_prepares_notification
-    // (which has DATABASE in its channels and DATABASE.isSystemChannel() returns true)
-    expect($formRequest->input('test_prepares_notification'))->toContain('database');
-    expect($formRequest->input('test_prepares_notification'))->toContain('mail');
-
-    // test_mail_only doesn't have DATABASE channel, so it shouldn't be injected
+    // No mandatory channels on these notifications, so input should be unchanged
+    expect($formRequest->input('test_prepares_notification'))->toBe(['mail']);
     expect($formRequest->input('test_mail_only'))->toBe(['mail']);
 });
 
-test('prepareForValidation does not duplicate system channel if already present', function () {
-    $httpRequest = Request::create('/', 'POST', [
-        'test_prepares_notification' => ['database', 'mail'],
-    ]);
-
-    $formRequest = TestValidationRequest::createFrom($httpRequest);
-    $formRequest->setContainer(app());
-
-    $reflection = new ReflectionMethod($formRequest, 'prepareForValidation');
-    $reflection->setAccessible(true);
-    $reflection->invoke($formRequest);
-
-    $channels = $formRequest->input('test_prepares_notification');
-
-    // Should not have duplicate database entries
-    expect(array_count_values($channels)['database'] ?? 0)->toBe(1);
-});
-
-test('prepareForValidation handles empty channel array', function () {
+test('prepareForValidation handles empty channel array without mandatory channels', function () {
     $httpRequest = Request::create('/', 'POST', [
         'test_prepares_notification' => [],
     ]);
@@ -145,50 +133,109 @@ test('prepareForValidation handles empty channel array', function () {
     $reflection->setAccessible(true);
     $reflection->invoke($formRequest);
 
-    // Should inject system channel even when array is empty
-    expect($formRequest->input('test_prepares_notification'))->toContain('database');
+    // No mandatory channels, so should remain empty
+    expect($formRequest->input('test_prepares_notification'))->toBe([]);
 });
 
-describe('system channel preservation', function () {
+test('default notifications method returns manager registered notifications', function () {
+    $request = new TestValidationRequest();
+
+    expect($request->notifications())->toBe([
+        TestPreparesNotification::class,
+        TestMailOnlyNotification::class,
+    ]);
+});
+
+test('overridden notifications method limits validation to only those notifications', function () {
+    $request = new TestLimitedValidationRequest();
+
+    $rules = $request->rules();
+
+    expect($rules)->toHaveKey('test_mail_only');
+    expect($rules)->toHaveKey('test_mail_only.*');
+    expect($rules)->not->toHaveKey('test_prepares_notification');
+    expect($rules)->not->toHaveKey('test_prepares_notification.*');
+});
+
+describe('mandatory channel preservation', function () {
     beforeEach(function () {
         $this->user = User::factory()->create();
+
+        app(NotificationSubscriptionsManager::class)->register([
+            TestMandatoryNotification::class,
+        ]);
     });
 
-    test('system channel is preserved when user submits empty array', function () {
-        // User submits empty channels - trying to opt out of everything
+    test('prepareForValidation injects mandatory channels', function () {
         $httpRequest = Request::create('/', 'POST', [
-            'test_prepares_notification' => [],
+            'test_mandatory_notification' => ['database'],
         ]);
 
         $formRequest = TestValidationRequest::createFrom($httpRequest);
         $formRequest->setContainer(app());
 
-        // Call prepareForValidation
         $reflection = new ReflectionMethod($formRequest, 'prepareForValidation');
         $reflection->setAccessible(true);
         $reflection->invoke($formRequest);
 
-        // System channel (database) should be injected
-        $channels = $formRequest->input('test_prepares_notification');
-        expect($channels)->toContain('database');
+        $channels = $formRequest->input('test_mandatory_notification');
 
-        // Now save to database
-        $this->user->updateNotificationPreferences([
-            'test_prepares_notification' => $channels,
+        expect($channels)->toContain('mail');
+        expect($channels)->toContain('database');
+    });
+
+    test('prepareForValidation does not duplicate mandatory channel if already present', function () {
+        $httpRequest = Request::create('/', 'POST', [
+            'test_mandatory_notification' => ['database', 'mail'],
         ]);
 
-        // Verify database has system channel
+        $formRequest = TestValidationRequest::createFrom($httpRequest);
+        $formRequest->setContainer(app());
+
+        $reflection = new ReflectionMethod($formRequest, 'prepareForValidation');
+        $reflection->setAccessible(true);
+        $reflection->invoke($formRequest);
+
+        $channels = $formRequest->input('test_mandatory_notification');
+
+        expect(array_count_values($channels)['mail'] ?? 0)->toBe(1);
+    });
+
+    test('mandatory channel is preserved when user submits empty array', function () {
+        $httpRequest = Request::create('/', 'POST', [
+            'test_mandatory_notification' => [],
+        ]);
+
+        $formRequest = TestValidationRequest::createFrom($httpRequest);
+        $formRequest->setContainer(app());
+
+        $reflection = new ReflectionMethod($formRequest, 'prepareForValidation');
+        $reflection->setAccessible(true);
+        $reflection->invoke($formRequest);
+
+        $channels = $formRequest->input('test_mandatory_notification');
+        expect($channels)->toContain('mail');
+
+        $this->user->updateNotificationPreferences([
+            'test_mandatory_notification' => $channels,
+        ]);
+
         $subscription = $this->user->notificationSubscriptions()
-            ->where('type', 'test_prepares_notification')
+            ->where('type', 'test_mandatory_notification')
             ->first();
 
-        expect($subscription->channels)->toContain('database');
+        expect($subscription->channels)->toContain('mail');
     });
 
-    test('system channel is preserved when user only selects non-system channels', function () {
-        // User only selects mail, not database
+    test('mandatory channel cannot be removed even when explicitly excluded', function () {
+        $this->user->notificationSubscriptions()->create([
+            'type' => 'test_mandatory_notification',
+            'channels' => ['database', 'mail'],
+        ]);
+
+        // User tries to update without mail channel
         $httpRequest = Request::create('/', 'POST', [
-            'test_prepares_notification' => ['mail'],
+            'test_mandatory_notification' => ['database'],
         ]);
 
         $formRequest = TestValidationRequest::createFrom($httpRequest);
@@ -198,46 +245,30 @@ describe('system channel preservation', function () {
         $reflection->setAccessible(true);
         $reflection->invoke($formRequest);
 
-        $channels = $formRequest->input('test_prepares_notification');
-
-        // Both mail and database should be present
-        expect($channels)->toContain('database');
-        expect($channels)->toContain('mail');
-    });
-
-    test('notifications without system channels are not affected', function () {
-        // TestMailOnlyNotification has only MAIL channel (no system channel)
-        $httpRequest = Request::create('/', 'POST', [
-            'test_mail_only' => [],
+        $this->user->updateNotificationPreferences([
+            'test_mandatory_notification' => $formRequest->input('test_mandatory_notification'),
         ]);
 
-        $formRequest = TestValidationRequest::createFrom($httpRequest);
-        $formRequest->setContainer(app());
+        $this->user->refresh();
+        $subscription = $this->user->notificationSubscriptions()
+            ->where('type', 'test_mandatory_notification')
+            ->first();
 
-        $reflection = new ReflectionMethod($formRequest, 'prepareForValidation');
-        $reflection->setAccessible(true);
-        $reflection->invoke($formRequest);
-
-        $channels = $formRequest->input('test_mail_only');
-
-        // Should remain empty - no system channel to inject
-        expect($channels)->toBe([]);
+        expect($subscription->channels)->toContain('mail');
     });
 
-    test('full flow: user preferences correctly reflect system channel preservation', function () {
-        // Step 1: User has no preferences yet
+    test('full flow: user preferences correctly reflect mandatory channel preservation', function () {
         $preferences = $this->user->getNotificationPreferences();
 
-        // System channels should appear in values (defaults)
-        expect($preferences->values['test_prepares_notification'])->toContain('database');
+        // Mandatory channels should appear in values (defaults)
+        expect($preferences->values['test_mandatory_notification'])->toContain('mail');
 
-        // System channels should NOT appear in types (UI options)
-        expect($preferences->types['test_prepares_notification'])->not->toHaveKey('database');
-        expect($preferences->types['test_prepares_notification'])->toHaveKey('mail');
+        // Mandatory channels should appear in types (visible in UI but locked)
+        expect($preferences->types['test_mandatory_notification'])->toHaveKey('mail');
 
-        // Step 2: User submits form with only mail selected
+        // User submits form without the mandatory channel
         $httpRequest = Request::create('/', 'POST', [
-            'test_prepares_notification' => ['mail'],
+            'test_mandatory_notification' => ['database'],
         ]);
 
         $formRequest = TestValidationRequest::createFrom($httpRequest);
@@ -247,57 +278,21 @@ describe('system channel preservation', function () {
         $reflection->setAccessible(true);
         $reflection->invoke($formRequest);
 
-        // Step 3: Save the processed input
         $this->user->updateNotificationPreferences([
-            'test_prepares_notification' => $formRequest->input('test_prepares_notification'),
+            'test_mandatory_notification' => $formRequest->input('test_mandatory_notification'),
         ]);
 
-        // Step 4: Verify stored preferences include system channel
         $subscription = $this->user->notificationSubscriptions()
-            ->where('type', 'test_prepares_notification')
+            ->where('type', 'test_mandatory_notification')
             ->first();
 
         expect($subscription->channels)->toContain('database');
         expect($subscription->channels)->toContain('mail');
 
-        // Step 5: Reload preferences and verify
         $this->user->refresh();
         $preferences = $this->user->getNotificationPreferences();
 
-        expect($preferences->values['test_prepares_notification'])->toContain('database');
-        expect($preferences->values['test_prepares_notification'])->toContain('mail');
-    });
-
-    test('system channel cannot be removed even when explicitly excluded', function () {
-        // First, create a subscription with both channels
-        $this->user->notificationSubscriptions()->create([
-            'type' => 'test_prepares_notification',
-            'channels' => ['database', 'mail'],
-        ]);
-
-        // User tries to update without database channel
-        $httpRequest = Request::create('/', 'POST', [
-            'test_prepares_notification' => ['mail'],
-        ]);
-
-        $formRequest = TestValidationRequest::createFrom($httpRequest);
-        $formRequest->setContainer(app());
-
-        $reflection = new ReflectionMethod($formRequest, 'prepareForValidation');
-        $reflection->setAccessible(true);
-        $reflection->invoke($formRequest);
-
-        // Update with processed input
-        $this->user->updateNotificationPreferences([
-            'test_prepares_notification' => $formRequest->input('test_prepares_notification'),
-        ]);
-
-        // Verify database channel is still there
-        $this->user->refresh();
-        $subscription = $this->user->notificationSubscriptions()
-            ->where('type', 'test_prepares_notification')
-            ->first();
-
-        expect($subscription->channels)->toContain('database');
+        expect($preferences->values['test_mandatory_notification'])->toContain('database');
+        expect($preferences->values['test_mandatory_notification'])->toContain('mail');
     });
 });

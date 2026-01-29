@@ -8,11 +8,14 @@ use Codinglabs\NotificationSubscriptions\NotificationSubscriptionsManager;
 
 trait ValidatesNotificationPreferences
 {
+    public function notifications(): array
+    {
+        return app(NotificationSubscriptionsManager::class)->notifications();
+    }
+
     public function rules(): array
     {
-        $notifications = app(NotificationSubscriptionsManager::class)->notifications();
-
-        return collect($notifications)
+        return collect($this->notifications())
             ->mapWithKeys(fn (string $notification) => [
                 $notification::type() => [
                     'array',
@@ -28,20 +31,19 @@ trait ValidatesNotificationPreferences
 
     protected function prepareForValidation(): void
     {
-        $notifications = app(NotificationSubscriptionsManager::class)->notifications();
+        $notifications = $this->notifications();
 
         foreach ($notifications as $notification) {
-            // Re-inject system channels (users can't opt out of these)
-            $systemChannels = collect($notification::channels())
-                ->filter(fn (SubscribableChannel $channel) => $channel->isSystemChannel())
+            // Re-inject mandatory channels (users can't opt out of these)
+            $mandatoryChannels = collect($notification::mandatoryChannels())
+                ->filter(fn (SubscribableChannel $channel) => in_array($channel, $notification::channels()))
                 ->map(fn (SubscribableChannel $channel) => $channel->value)
                 ->toArray();
 
             $currentChannels = $this->array($notification::type());
 
-            // Merge system channels back into the request
             $this->merge([
-                $notification::type() => array_unique(array_merge($currentChannels, $systemChannels)),
+                $notification::type() => array_unique(array_merge($currentChannels, $mandatoryChannels)),
             ]);
         }
     }

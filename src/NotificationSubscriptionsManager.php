@@ -8,7 +8,10 @@ class NotificationSubscriptionsManager
 
     public function register(array $notifications): void
     {
-        $this->notifications = array_merge($this->notifications, $notifications);
+        $this->notifications = [
+            ...$this->notifications,
+            ...$notifications,
+        ];
     }
 
     public function notifications(): array
