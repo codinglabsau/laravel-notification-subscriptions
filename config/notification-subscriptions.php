@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\User;
+use Codinglabs\NotificationSubscriptions\Models\NotificationSubscription;
+
 return [
 
     /*
@@ -22,7 +25,7 @@ return [
     |
     */
 
-    'user_model' => \App\Models\User::class,
+    'user_model' => User::class,
 
     /*
     |--------------------------------------------------------------------------
@@ -34,7 +37,7 @@ return [
     |
     */
 
-    'subscription_model' => \Codinglabs\NotificationSubscriptions\Models\NotificationSubscription::class,
+    'subscription_model' => NotificationSubscription::class,
 
     /*
     |--------------------------------------------------------------------------

@@ -9,7 +9,7 @@ use Codinglabs\NotificationSubscriptions\NotificationSubscriptionsManager;
  * @method static void register(array $notifications)
  * @method static array notifications()
  *
- * @see \Codinglabs\NotificationSubscriptions\NotificationSubscriptionsManager
+ * @see NotificationSubscriptionsManager
  */
 class NotificationSubscriptions extends Facade
 {
